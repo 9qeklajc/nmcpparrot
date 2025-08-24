@@ -3,7 +3,6 @@ use nostr_sdk::prelude::*;
 use std::future::Future;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use log;
 
 /// Runs a shell command each time it receives a direct message
 pub async fn run_command_on_message(
@@ -24,7 +23,7 @@ pub async fn run_command_on_message(
             let cmd = cmd.clone();
             async move {
                 handle_message(&handle, &cmd, decrypted_message).await;
-                false   // Never returns
+                false // Never returns
             }
         }
     };
@@ -40,7 +39,7 @@ pub async fn run_command_on_message(
 /// This small message handler performs the “kill old, spawn new, store new” logic in one place.
 async fn handle_message(handle: &process_management::ChildHandle, cmd: &str, msg: String) {
     let mut guard = handle.lock().await;
-    process_management::kill_existing(&mut *guard).await;
+    process_management::kill_existing(&mut guard).await;
 
     let bytes = msg.into_bytes();
     match process_management::spawn_and_pipe(cmd, bytes) {
@@ -66,34 +65,54 @@ where
     Fut: Future<Output = bool> + Send + 'static,
 {
     let subscription = Filter::new()
-        .pubkey(our_pubkey.clone()) // messages intended for us
         .kind(Kind::GiftWrap)
-        .limit(0); // 0 means only new events
+        .pubkey(*our_pubkey)
+        .limit(0);
 
+    log::info!("Subscribing to GiftWrap events for pubkey: {}", our_pubkey);
+    log::info!("Expected sender pubkey: {}", sender_pubkey);
     client.subscribe(subscription, None).await?;
 
     let callback_clone = callback.clone();
     client
         .handle_notifications(move |notification| {
             let callback_clone = callback_clone.clone();
+            let sender_pubkey = *sender_pubkey;
             async move {
-                // only handle event notifications
                 let event = match notification {
-                    RelayPoolNotification::Event { event, .. } => event,
-                    _ => return Ok(false),
+                    RelayPoolNotification::Event { event, .. } => {
+                        log::debug!("Received event kind {} from {}", event.kind, event.pubkey);
+                        event
+                    }
+                    _ => {
+                        log::debug!("Non-event notification");
+                        return Ok(false);
+                    }
                 };
 
-                // only handle GiftWrap events
                 if event.kind != Kind::GiftWrap {
                     return Ok(false);
                 }
 
-                // try to unwrap the GiftWrap envelope
-                if let Ok(UnwrappedGift { rumor, sender }) = client.unwrap_gift_wrap(&event).await {
-                    // only process private DMs from our target sender
-                    if sender == *sender_pubkey && rumor.kind == Kind::PrivateDirectMessage {
-                        let guard = callback_clone.lock().await;
-                        return Ok(guard(rumor.content).await)
+                log::debug!("Processing GiftWrap event");
+                match client.unwrap_gift_wrap(&event).await {
+                    Ok(UnwrappedGift { rumor, sender }) => {
+                        log::debug!("Unwrapped gift from {} with kind {}", sender, rumor.kind);
+
+                        if sender == sender_pubkey && rumor.kind == Kind::PrivateDirectMessage {
+                            log::info!("Received DM from target sender: {}", rumor.content);
+                            let guard = callback_clone.lock().await;
+                            return Ok(guard(rumor.content).await);
+                        } else {
+                            log::debug!(
+                                "Ignoring message from {} (expected {})",
+                                sender,
+                                sender_pubkey
+                            );
+                        }
+                    }
+                    Err(e) => {
+                        log::warn!("Failed to unwrap gift wrap: {}", e);
                     }
                 }
 
@@ -120,7 +139,7 @@ pub async fn wait_for_message(
             async move {
                 let mut message_guard = message_mutex.lock().await;
                 *message_guard = Some(message);
-                true    // Returns as soon as we receive the first message
+                true // Returns as soon as we receive the first message
             }
         }
     };
@@ -137,6 +156,6 @@ pub async fn wait_for_message(
         .lock()
         .await
         .take()
-        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "No message found"))?;
+        .ok_or_else(|| std::io::Error::other("No message found"))?;
     Ok(result)
 }

@@ -17,6 +17,9 @@ Here are the features it includes:
 - ✅ **`onmessage` command:** Continuously listens for NIP-17 direct messages, and for each one, it runs a shell command you specify.
 - ✅ **`listen` command:** Continuously listens for NIP-17 direct messages, and for each one, it prints it to stdout.
 - ✅ **`mcp` command:** MCP server that allows an AI agent to send a direct message to a specific user, or to wait for their message.
+- 🆕 **`nostr-memory-mcp` command:** Advanced MCP server that provides persistent memory storage for AI agents using encrypted Nostr DMs.
+- 🆕 **`combined-mcp` command:** Combined MCP server with chat, search, and command execution capabilities.
+- 🆕 **`multi-agent-mcp` command:** Multi-agent MCP server for running multiple AI agents in parallel with integrated Nostr memory.
 
 ⚠️ **Note:** This is relatively new, experimental software. Please proceed with caution.
 
@@ -74,6 +77,65 @@ nparrot onmessage 'sed "s/^/New message from Nostr: /" | goose run --name="test-
 
 Notes:
 - During testing, gpt-4o was used with good results
+
+# AI Agent Memory with Nostr
+
+The `nostr-memory-mcp` command provides a powerful memory system for AI agents using Nostr's encrypted direct messages. This allows agents to store and retrieve persistent memories across sessions.
+
+## Features
+
+🧠 **Memory Operations**: Store, retrieve, update, and delete memory entries  
+🔐 **Privacy**: All memories encrypted using Nostr NIP-17  
+📋 **Types**: Support for user preferences, context, facts, instructions, and notes  
+📂 **Categories**: Organize memories by personal, work, project, or general categories  
+🏷️ **Tags**: Tag-based organization and filtering  
+📊 **Statistics**: Get insights about stored memories  
+🧹 **Cleanup**: Automatic expiry and cleanup of old memories  
+
+## Quick Start
+
+```bash
+# Set up environment
+export NSEC=nsec1...
+export TARGET_PUBKEY=npub1...
+
+# Start the memory server
+./nparrot nostr-memory-mcp
+```
+
+For detailed usage instructions, see [NOSTR_MEMORY_MCP_USAGE.md](NOSTR_MEMORY_MCP_USAGE.md).
+
+# Enhanced Multi-Agent System
+
+The `multi-agent-mcp` command now includes integrated Nostr memory capabilities, allowing agents to have persistent memory across sessions.
+
+## Key Features
+
+🤖 **Multi-Agent Orchestration**: Deploy and manage multiple AI agents in parallel  
+🧠 **Persistent Memory**: Agents can store and recall information using Nostr  
+🔄 **Local Fallback**: Memory system works even when Nostr is unavailable  
+📊 **Agent Management**: Create, monitor, and coordinate multiple agent instances  
+🎯 **Intelligent Routing**: Automatic agent selection based on task requirements  
+
+## Quick Start
+
+```bash
+# Set up environment for memory functionality
+export NSEC=nsec1...
+export TARGET_PUBKEY=npub1...
+
+# Start the enhanced multi-agent server
+./nparrot multi-agent-mcp
+```
+
+Available agent types:
+- **FuxScout** (search): Information gathering and research
+- **FuxCoder** (goose): Development and engineering tasks  
+- **FuxManager** (enhanced): Project coordination and management
+- **FuxSpecialist** (combined): Multi-domain expertise
+- **FuxComm** (chat): Communication coordination
+
+For detailed information, see [MULTI_AGENT_NOSTR_MEMORY.md](MULTI_AGENT_NOSTR_MEMORY.md).
 
 # Other commands
 

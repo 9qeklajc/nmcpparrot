@@ -4,7 +4,6 @@ use std::{
     process::{Child, Command as StdCommand, Stdio},
 };
 use tokio::sync::Mutex;
-use log;
 
 // Type alias for clarity
 pub type ChildHandle = Arc<Mutex<Option<Child>>>;
