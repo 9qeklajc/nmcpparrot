@@ -55,7 +55,7 @@ impl ProgressTracker {
 
     pub fn create_progress_reminder(&self, tool_name: &str) -> String {
         format!(
-            "⚠️ CRITICAL: Before executing '{}', you MUST send a progress update using the 'progress' tool. \
+            "CRITICAL: Before executing '{}', you MUST send a progress update using the 'progress' tool. \
             This keeps the user informed that their request is being processed. \
             Example: {{\"tool\": \"progress\", \"arguments\": {{\"message\": \"Processing your {} request...\"}}}}\n\n\
             After completion, you MUST also send final results using the 'send' tool.",
@@ -64,31 +64,31 @@ impl ProgressTracker {
     }
 
     pub fn create_comprehensive_instructions(&self) -> String {
-        "🚨 **ZERO TOLERANCE WORKFLOW ENFORCEMENT**:\n\n\
-        1️⃣ **INSTANT PROGRESS REQUIRED**: The MOMENT you start processing, send progress\n\
-        2️⃣ **EXECUTE OPERATION**: Use the requested tool (addnote, searchnotes, etc.)\n\
-        3️⃣ **MANDATORY FINAL SEND**: You MUST end with 'send' - NO EXCEPTIONS EVER\n\n\
-        📋 **ABSOLUTELY REQUIRED PATTERN**:\n\
+        "ZERO TOLERANCE WORKFLOW ENFORCEMENT:\n\n\
+        1. INSTANT PROGRESS REQUIRED: The MOMENT you start processing, send progress\n\
+        2. EXECUTE OPERATION: Use the requested tool (addnote, searchnotes, etc.)\n\
+        3. MANDATORY FINAL SEND: You MUST end with 'send' - NO EXCEPTIONS EVER\n\n\
+        ABSOLUTELY REQUIRED PATTERN:\n\
         ```json\n\
         {\"tool\": \"progress\", \"arguments\": {\"message\": \"Processing your [operation] request...\"}}\n\
         {\"tool\": \"[operation]\", \"arguments\": {...}}\n\
-        {\"tool\": \"send\", \"arguments\": {\"message\": \"✅ [Operation] completed: [results]\"}}\n\
+        {\"tool\": \"send\", \"arguments\": {\"message\": \"[Operation] completed: [results]\"}}\n\
         ```\n\n\
-        🔴 **CRITICAL ENFORCEMENT RULES**:\n\
-        • EVERY user message MUST trigger progress → operation → send\n\
-        • NO EXCEPTIONS for simple requests - ALL need progress\n\
-        • NO EXCEPTIONS for quick operations - ALL need final send\n\
-        • Users see NOTHING if you don't use send\n\
-        • Users think you're broken if you don't use progress\n\n\
-        💀 **VIOLATION CONSEQUENCES**:\n\
-        ❌ **SKIP PROGRESS** → User thinks system is frozen\n\
-        ❌ **SKIP FINAL SEND** → User gets no response\n\
-        ❌ **BREAK PATTERN** → System appears broken\n\n\
-        🚫 **ABSOLUTELY FORBIDDEN**:\n\
-        • Ending without 'send' tool call\n\
-        • Starting operations without 'progress'\n\
-        • Assuming users know what you're doing\n\
-        • Silent failures or completions"
+        CRITICAL ENFORCEMENT RULES:\n\
+        - EVERY user message MUST trigger progress -> operation -> send\n\
+        - NO EXCEPTIONS for simple requests - ALL need progress\n\
+        - NO EXCEPTIONS for quick operations - ALL need final send\n\
+        - Users see NOTHING if you don't use send\n\
+        - Users think you're broken if you don't use progress\n\n\
+        VIOLATION CONSEQUENCES:\n\
+        - SKIP PROGRESS -> User thinks system is frozen\n\
+        - SKIP FINAL SEND -> User gets no response\n\
+        - BREAK PATTERN -> System appears broken\n\n\
+        ABSOLUTELY FORBIDDEN:\n\
+        - Ending without 'send' tool call\n\
+        - Starting operations without 'progress'\n\
+        - Assuming users know what you're doing\n\
+        - Silent failures or completions"
             .to_string()
     }
 }

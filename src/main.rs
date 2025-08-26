@@ -251,7 +251,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 log::error!("{e}");
             })?;
             service.waiting().await?;
-            client
+            progress_client.unwrap()
                 .send_private_msg(target_pk, "Task completed", [])
                 .await?;
         }
