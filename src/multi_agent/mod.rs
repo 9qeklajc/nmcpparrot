@@ -93,7 +93,8 @@ impl MultiAgentMcp {
             || message_lower.contains("orchestration status")
             || message_lower.contains("ready and standing by")
             || message_lower.contains("task processing")
-            || message_lower.contains("tools executed");
+            || message_lower.contains("tools executed")
+            || message_lower.contains("task completed");
 
         // Send orchestration status messages to progress channel
         if is_progress_message {
@@ -116,7 +117,6 @@ impl MultiAgentMcp {
             || message_lower.contains("all tasks completed")
             || message_lower.contains("deployed")
             || message_lower.contains("system processing")
-            || message_lower.contains("task completed")
             || message_lower.contains("agents have delivered")
             || message_lower.contains("completion status")
             || message_lower.contains("results delivered");
