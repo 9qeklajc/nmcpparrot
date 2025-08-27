@@ -238,22 +238,64 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .await?;
         }
         Commands::Mcp => {
-            // Create and serve our chat service
-            let service = Chat::new(
-                client.clone(),
-                progress_client.clone(),
-                our_pubkey,
-                target_pk,
-            )
-            .serve(stdio())
-            .await
-            .inspect_err(|e| {
-                log::error!("{e}");
-            })?;
-            service.waiting().await?;
-            progress_client.unwrap()
-                .send_private_msg(target_pk, "Task completed", [])
-                .await?;
+            // Create and serve our chat service with retry logic
+            let mut retry_count = 0;
+            const MAX_RETRIES: u8 = 1; // Retry once
+
+            loop {
+                let service_result = Chat::new(
+                    client.clone(),
+                    progress_client.clone(),
+                    our_pubkey,
+                    target_pk,
+                )
+                .serve(stdio())
+                .await;
+
+                match service_result {
+                    Ok(service) => {
+                        match service.waiting().await {
+                            Ok(_) => {
+                                // Success - send completion message and break
+                                if let Some(ref progress_client) = progress_client {
+                                    let _ = progress_client
+                                        .send_private_msg(target_pk, "Task completed", [])
+                                        .await;
+                                }
+                                break;
+                            }
+                            Err(e) => {
+                                log::error!("Service waiting error: {}", e);
+                                if retry_count < MAX_RETRIES {
+                                    retry_count += 1;
+                                    log::info!(
+                                        "Retrying MCP service (attempt {}/{})",
+                                        retry_count + 1,
+                                        MAX_RETRIES + 1
+                                    );
+                                    continue;
+                                } else {
+                                    return Err(e.into());
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        log::error!("Service creation error: {}", e);
+                        if retry_count < MAX_RETRIES {
+                            retry_count += 1;
+                            log::info!(
+                                "Retrying MCP service (attempt {}/{})",
+                                retry_count + 1,
+                                MAX_RETRIES + 1
+                            );
+                            continue;
+                        } else {
+                            return Err(e.into());
+                        }
+                    }
+                }
+            }
         }
         Commands::GooseMcp => {
             // Create and serve the Goose MCP server
