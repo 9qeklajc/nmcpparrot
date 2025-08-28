@@ -8,6 +8,8 @@ use rmcp::{
     schemars, tool, Error as RmcpError, ServerHandler,
 };
 use tokio::time::{sleep, Duration};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub struct SendMessageRequest {
@@ -28,6 +30,7 @@ pub struct Chat {
     our_pubkey: PublicKey,
     target_pubkey: PublicKey,
     response_tracker: ResponseTracker,
+    task_completed: Arc<AtomicBool>,
 }
 
 #[tool(tool_box)]
@@ -44,6 +47,7 @@ impl Chat {
             our_pubkey,
             target_pubkey,
             response_tracker: ResponseTracker::new(),
+            task_completed: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -55,6 +59,8 @@ impl Chat {
         let result = self.send_with_retry(&self.client, message).await;
         if result.is_ok() {
             self.response_tracker.mark_response_sent();
+            // Mark task as completed when final response is sent
+            self.task_completed.store(true, Ordering::Relaxed);
         }
         result
     }
@@ -79,6 +85,13 @@ impl Chat {
 
     #[tool(description = "Listen and wait for the user's next message")]
     pub async fn wait(&self) -> Result<CallToolResult, RmcpError> {
+        // Check if task has been completed - if so, exit instead of waiting
+        if self.task_completed.load(Ordering::Relaxed) {
+            return Ok(CallToolResult::success(vec![Content::text(
+                "Task completed - agent session ending".to_string(),
+            )]));
+        }
+
         let message = wait_for_message(&self.client, &self.our_pubkey, &self.target_pubkey)
             .await
             .map_err(|e| RmcpError::internal_error(e.to_string(), None))?;
@@ -149,7 +162,7 @@ impl ServerHandler for Chat {
                 .enable_tools()
                 .build(),
             server_info: Implementation::from_build_env(),
-            instructions: Some("This server provides tools for talking to a specific user over the Nostr protocol via encrypted DMs.\n\nMANDATORY WORKFLOW FOR EVERY USER MESSAGE:\n\n1. IMMEDIATE PROGRESS RESPONSE: Send a progress update\n   Example: {\"tool\": \"progress\", \"arguments\": {\"message\": \"I'm working on your request...\"}}\n\n2. PERFORM OPERATIONS: Execute the requested tasks\n\n3. MANDATORY FINAL SEND: End with a 'send' tool call containing your complete response\n   Example: {\"tool\": \"send\", \"arguments\": {\"message\": \"Here are the results...\"}}\n\nCRITICAL: Pattern is wait -> progress -> [operations] -> send\n\nUSER VISIBILITY RULES:\n- Users can ONLY see messages sent via 'send' and 'progress' tools\n- If you don't use 'send', the user sees NOTHING\n\nFORBIDDEN BEHAVIORS:\n- Never end a turn without 'send'\n- Never start work without 'progress'\n- Never send follow-up messages asking if user needs help\n- Never ask \"Is there anything else I can help you with?\"\n- Never send unsolicited check-in messages\n- Provide complete answers in single 'send' call\n\nJSON PARAMETER RULES:\n- Parameters MUST be valid JSON: {\"message\": \"text\"}\n- Use double quotes only\n- No trailing characters after closing brace\n- No comments outside JSON\n\nPARAMETER PARSING FAILURES WILL BREAK THE SYSTEM".to_string()),
+            instructions: Some("This server provides tools for talking to a specific user over the Nostr protocol via encrypted DMs.\n\nMANDATORY WORKFLOW FOR EVERY USER MESSAGE:\n\n1. IMMEDIATE PROGRESS RESPONSE: Send a progress update\n   Example: {\"tool\": \"progress\", \"arguments\": {\"message\": \"I'm working on your request...\"}}\n\n2. PERFORM OPERATIONS: Execute the requested tasks\n\n3. MANDATORY FINAL SEND: End with a 'send' tool call containing your complete response\n   Example: {\"tool\": \"send\", \"arguments\": {\"message\": \"Here are the results...\"}}\n\n4. TASK COMPLETION: After sending final response, agent session ends automatically\n\nCRITICAL: Pattern is wait -> progress -> [operations] -> send -> EXIT\n\nUSER VISIBILITY RULES:\n- Users can ONLY see messages sent via 'send' and 'progress' tools\n- If you don't use 'send', the user sees NOTHING\n\nFORBIDDEN BEHAVIORS:\n- Never end a turn without 'send'\n- Never start work without 'progress'\n- Never send follow-up messages asking if user needs help\n- Never ask \"Is there anything else I can help you with?\"\n- Never send unsolicited check-in messages\n- Never continue waiting after sending final response\n- Provide complete answers in single 'send' call then EXIT\n\nJSON PARAMETER RULES:\n- Parameters MUST be valid JSON: {\"message\": \"text\"}\n- Use double quotes only\n- No trailing characters after closing brace\n- No comments outside JSON\n\nPARAMETER PARSING FAILURES WILL BREAK THE SYSTEM".to_string()),
         }
     }
 }
