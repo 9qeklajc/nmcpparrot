@@ -72,21 +72,10 @@ impl ResponseTracker {
 }
 
 pub fn create_response_reminder() -> String {
-    "🚨 CRITICAL MANDATORY WORKFLOW - NO EXCEPTIONS:\n\
+    "WORKFLOW: progress -> [operations] -> send\n\
     \n\
-    1️⃣ IMMEDIATE ACTION REQUIRED: Send progress update NOW\n\
-       {\"tool\": \"progress\", \"arguments\": {\"message\": \"I'm working on your request...\"}}\n\
-    \n\
-    2️⃣ PERFORM OPERATIONS: Execute the user's request\n\
-    \n\
-    3️⃣ MANDATORY FINAL RESPONSE: You MUST end with 'send' tool call\n\
-       {\"tool\": \"send\", \"arguments\": {\"message\": \"[Your final response here]\"}}\n\
-    \n\
-    🔴 CRITICAL: The user can ONLY see messages sent via 'send' and 'progress' tools\n\
-    🔴 CRITICAL: If you don't use 'send', the user sees NOTHING\n\
-    🔴 CRITICAL: If you don't use 'progress', the user thinks you're not working\n\
-    \n\
-    💀 FAILURE TO FOLLOW THIS PATTERN WILL BREAK THE USER EXPERIENCE\n\
-    \n\
-    ⚠️ This applies to EVERY response: simple answers, complex operations, errors, confirmations - ALL must follow this pattern.".to_string()
+    🔴 CRITICAL: User can ONLY see 'send' and 'progress' tool messages\n\
+    🔴 CRITICAL: Must end with 'send' tool call - provide final answer only\n\
+    🔴 CRITICAL: Do NOT send follow-up messages asking if user needs more help"
+        .to_string()
 }

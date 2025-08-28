@@ -88,7 +88,10 @@ impl ProgressTracker {
         - Ending without 'send' tool call\n\
         - Starting operations without 'progress'\n\
         - Assuming users know what you're doing\n\
-        - Silent failures or completions"
+        - Silent failures or completions\n\
+        - Sending follow-up messages asking if user needs help\n\
+        - Asking \"Is there anything else I can help you with?\"\n\
+        - Unsolicited check-in messages after completing task"
             .to_string()
     }
 }

@@ -191,8 +191,7 @@ impl MultiAgentMcp {
                 "✅ **ALL TASKS COMPLETED** ✅\n\n\
                 🎯 **Status**: All {} background task(s) have finished processing\n\
                 🧹 **Cleanup**: System cleaned up {} completed process(es)\n\
-                🔄 **Ready**: System is ready for new requests\n\n\
-                💡 **Next Steps**: You can submit new tasks or continue the conversation.",
+                🔄 **Ready**: System is ready for new requests",
                 agents.len(),
                 cleaned_count
             );
@@ -795,6 +794,11 @@ impl ServerHandler for MultiAgentMcp {
                 - goose: code, build, fix, develop\n\
                 - enhanced: project, organize, plan\n\
                 - combined: general questions, complex tasks\n\n\
+                FORBIDDEN:\n\
+                - Never send follow-up messages asking if user needs help\n\
+                - Never ask \"Is there anything else I can help you with?\"\n\
+                - Never send unsolicited check-in messages\n\
+                - Agents should complete task and stop\n\n\
                 Tools: analyze_request, create_agent, create_agents_parallel, wait, send"
                     .to_string(),
             ),
