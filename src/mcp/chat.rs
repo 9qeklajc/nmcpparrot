@@ -153,7 +153,6 @@ impl Chat {
     }
 }
 
-#[tool(tool_box)]
 impl ServerHandler for Chat {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {

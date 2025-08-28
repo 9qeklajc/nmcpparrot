@@ -326,13 +326,13 @@ impl CombinedServer {
     }
 
     #[tool(description = "Display Goose help information.")]
-    async fn help(&self) -> Result<CallToolResult, RmcpError> {
+    async fn goose_help(&self) -> Result<CallToolResult, RmcpError> {
         let result = GooseCommands::help().await;
         Self::convert_goose_result(result)
     }
 
     #[tool(description = "List available or installed MCP servers for Goose.")]
-    async fn mcplist(
+    async fn mcp_list(
         &self,
         #[tool(aggr)] request: McpListRequest,
     ) -> Result<CallToolResult, RmcpError> {
@@ -341,7 +341,7 @@ impl CombinedServer {
     }
 
     #[tool(description = "Install an MCP server for use with Goose.")]
-    async fn mcpinstall(
+    async fn mcp_install(
         &self,
         #[tool(aggr)] request: McpInstallRequest,
     ) -> Result<CallToolResult, RmcpError> {
@@ -437,7 +437,6 @@ impl CombinedServer {
     }
 }
 
-#[tool(tool_box)]
 impl ServerHandler for CombinedServer {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
