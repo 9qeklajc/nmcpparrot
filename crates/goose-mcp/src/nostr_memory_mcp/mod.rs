@@ -15,13 +15,13 @@ use std::{env, future::Future, pin::Pin};
 use tokio::sync::mpsc;
 
 mod client;
-mod types;
+pub mod types;
 
 use client::NostrMemoryClient;
 use nostr_sdk::prelude::*;
-use types::*;
+pub use types::*;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct NostrMcpRouter {
     tools: Vec<Tool>,
     instructions: String,

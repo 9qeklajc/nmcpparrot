@@ -7,14 +7,6 @@ pub static APP_STRATEGY: Lazy<AppStrategyArgs> = Lazy::new(|| AppStrategyArgs {
     app_name: "goose".to_string(),
 });
 
-pub mod autovisualiser;
-pub mod computercontroller;
-mod developer;
-mod memory;
-mod tutorial;
+pub mod nostr_memory_mcp;
 
-pub use autovisualiser::AutoVisualiserRouter;
-pub use computercontroller::ComputerControllerRouter;
-pub use developer::DeveloperRouter;
-pub use memory::MemoryRouter;
-pub use tutorial::TutorialRouter;
+pub use nostr_memory_mcp::NostrMcpRouter;
