@@ -7,10 +7,7 @@ pub mod resource_scheduler;
 pub mod types;
 
 use crate::mcp::chat::Chat;
-use crate::nostr_mcp::{
-    DeleteMemoryRequest, NostrMemoryServer, RetrieveMemoryRequest, StoreMemoryRequest,
-    UpdateMemoryRequest,
-};
+use goose_mcp::nostr_memory_mcp::NostrMcpRouter;
 use nostr_sdk::prelude::*;
 use rmcp::{
     model::{
@@ -31,7 +28,7 @@ pub struct MultiAgentMcp {
     chat: Chat,
     orchestrator: IntelligentOrchestrator,
     #[allow(dead_code)] // Used in agent architecture but blocked at main orchestrator level
-    nostr_memory: NostrMemoryServer,
+    nostr_memory: NostrMcpRouter,
 }
 
 #[tool(tool_box)]
@@ -58,13 +55,7 @@ impl MultiAgentMcp {
                 target_pubkey,
             ),
             orchestrator: IntelligentOrchestrator::new(),
-            nostr_memory: NostrMemoryServer::new(
-                client,
-                progress_client,
-                keys,
-                our_pubkey,
-                target_pubkey,
-            ),
+            nostr_memory: NostrMcpRouter::new(Some(keys.secret_key().to_bech32().unwrap())),
         }
     }
 
@@ -73,8 +64,9 @@ impl MultiAgentMcp {
     )]
     async fn send(
         &self,
-        #[tool(aggr)] request: crate::mcp::types::SendMessageRequest,
+        #[tool(aggr)] crate::mcp::types::SendMessageRequest { message }: crate::mcp::types::SendMessageRequest,
     ) -> Result<CallToolResult, RmcpError> {
+        let request = crate::mcp::types::SendMessageRequest { message };
         let message_lower = request.message.to_lowercase();
 
         // ROUTING: Messages that should go to PROGRESS CHANNEL (orchestration status)
@@ -146,9 +138,9 @@ impl MultiAgentMcp {
     #[tool(description = "Send a progress/debug message to the user")]
     async fn progress(
         &self,
-        #[tool(aggr)] request: crate::mcp::types::ProgressMessageRequest,
+        #[tool(aggr)] crate::mcp::types::ProgressMessageRequest { message }: crate::mcp::types::ProgressMessageRequest,
     ) -> Result<CallToolResult, RmcpError> {
-        self.chat.progress(request).await
+        self.chat.progress(crate::mcp::types::ProgressMessageRequest { message }).await
     }
 
     #[tool(
@@ -604,7 +596,7 @@ impl MultiAgentMcp {
     #[tool(description = "Store a memory entry - AGENTS ONLY, main orchestrator must create agent")]
     async fn store_memory(
         &self,
-        #[tool(aggr)] request: StoreMemoryRequest,
+        #[tool(aggr)] request: String,
     ) -> Result<CallToolResult, RmcpError> {
         // ENFORCEMENT: Memory operations should be done by agents, not main orchestrator
         let enforcement_message = "🚨 **AGENT CREATION MANDATE VIOLATION** 🚨\n\n\
@@ -637,7 +629,7 @@ impl MultiAgentMcp {
     )]
     async fn retrieve_memory(
         &self,
-        #[tool(aggr)] request: RetrieveMemoryRequest,
+        #[tool(aggr)] request: String,
     ) -> Result<CallToolResult, RmcpError> {
         // ENFORCEMENT: Memory operations should be done by agents, not main orchestrator
         let enforcement_message = "🚨 **AGENT CREATION MANDATE VIOLATION** 🚨\n\n\
@@ -670,7 +662,7 @@ impl MultiAgentMcp {
     )]
     async fn update_memory(
         &self,
-        #[tool(aggr)] _request: UpdateMemoryRequest,
+        #[tool(aggr)] _request: String,
     ) -> Result<CallToolResult, RmcpError> {
         // ENFORCEMENT: Memory operations should be done by agents, not main orchestrator
         let enforcement_message = "🚨 **AGENT CREATION MANDATE VIOLATION** 🚨\n\n\
@@ -694,7 +686,7 @@ impl MultiAgentMcp {
     )]
     async fn delete_memory(
         &self,
-        #[tool(aggr)] _request: DeleteMemoryRequest,
+        #[tool(aggr)] _request: String,
     ) -> Result<CallToolResult, RmcpError> {
         // ENFORCEMENT: Memory operations should be done by agents, not main orchestrator
         let enforcement_message = "🚨 **AGENT CREATION MANDATE VIOLATION** 🚨\n\n\

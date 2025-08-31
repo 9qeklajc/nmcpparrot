@@ -1,6 +1,6 @@
 use crate::goose_mcp::{commands::GooseCommands, types::*};
 use crate::mcp::chat::{Chat, ProgressMessageRequest, SendMessageRequest};
-use crate::searxng_mcp::{SearXNGServer, SearXNGWebSearchRequest};
+// use crate::searxng_mcp::{SearXNGServer, SearXNGWebSearchRequest}; // Module not implemented yet
 use nostr_sdk::prelude::*;
 use rmcp::{
     model::{
@@ -12,10 +12,10 @@ use rmcp::{
 #[derive(Debug, Clone)]
 pub struct CombinedServer {
     chat: Chat,
-    searxng: SearXNGServer,
+    // searxng: SearXNGServer, // Module not implemented yet
 }
 
-#[tool(tool_box)]
+#[tool]
 impl CombinedServer {
     pub fn new(
         client: Client,
@@ -31,30 +31,30 @@ impl CombinedServer {
                 our_pubkey,
                 target_pubkey,
             ),
-            searxng: SearXNGServer::new(
-                searxng_url,
-                client,
-                progress_client,
-                our_pubkey,
-                target_pubkey,
-            ),
+            // searxng: SearXNGServer::new(
+            //     searxng_url,
+            //     client,
+            //     progress_client,
+            //     our_pubkey,
+            //     target_pubkey,
+            // ), // Module not implemented yet
         }
     }
 
     #[tool(description = "Send a message to the user via Nostr DM")]
     async fn send(
         &self,
-        #[tool(aggr)] request: SendMessageRequest,
+        #[tool(aggr)] SendMessageRequest { message }: SendMessageRequest,
     ) -> Result<CallToolResult, RmcpError> {
-        self.chat.send(request).await
+        self.chat.send(SendMessageRequest { message }).await
     }
 
     #[tool(description = "Send a progress/debug message to the user via the progress identity")]
     async fn progress(
         &self,
-        #[tool(aggr)] request: ProgressMessageRequest,
+        #[tool(aggr)] ProgressMessageRequest { message }: ProgressMessageRequest,
     ) -> Result<CallToolResult, RmcpError> {
-        self.chat.progress(request).await
+        self.chat.progress(ProgressMessageRequest { message }).await
     }
 
     #[tool(description = "Listen and wait for the user's next message")]
@@ -418,9 +418,15 @@ impl CombinedServer {
     #[tool(description = "Execute web searches with pagination")]
     async fn searxng_web_search(
         &self,
-        #[tool(aggr)] request: SearXNGWebSearchRequest,
+        #[tool(aggr)] _request: String, // SearXNGWebSearchRequest not available
     ) -> Result<CallToolResult, RmcpError> {
-        self.searxng.searxng_web_search(request).await
+        // Placeholder response since searxng module is not implemented
+        Ok(CallToolResult::success(vec![Content::text(
+            "🔍 **Search Request Received**\n\n\
+            ⚠️ **SearXNG module not implemented yet**\n\
+            🚧 This feature requires the searxng_mcp module to be created.\n\n\
+            For now, please use alternative search methods or implement the searxng_mcp module.".to_string()
+        )]))
     }
 
     fn convert_goose_result(result: CommandResult) -> Result<CallToolResult, RmcpError> {

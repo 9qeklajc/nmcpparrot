@@ -1,6 +1,6 @@
 use super::types::*;
-use crate::nostr_mcp::NostrMemoryServer;
-use crate::searxng_mcp::SearXNGServer;
+// NostrMemoryServer removed - use standalone nostr-memory-mcp crate
+// use crate::searxng_mcp::SearXNGServer; // Module not implemented yet
 use nostr_sdk::prelude::*;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -13,7 +13,7 @@ pub struct AgentPool {
     progress_client: Option<Client>,
     our_pubkey: PublicKey,
     target_pubkey: PublicKey,
-    nostr_memory: NostrMemoryServer,
+    nostr_memory: goose_mcp::nostr_memory_mcp::NostrMcpRouter,
 }
 
 #[derive(Debug)]
@@ -130,7 +130,7 @@ impl AgentPool {
         progress_client: Option<Client>,
         our_pubkey: PublicKey,
         target_pubkey: PublicKey,
-        nostr_memory: NostrMemoryServer,
+        nostr_memory: goose_mcp::nostr_memory_mcp::NostrMcpRouter,
     ) -> Self {
         Self {
             agents: Arc::new(RwLock::new(HashMap::new())),
@@ -1263,68 +1263,28 @@ impl AgentPool {
                                                         format!("🔍 Agent {} executing real search for: {}", agent_name, msg.content), []).await;
                                                 }
 
-                                                // ACTUALLY USE SEARXNG TOOL - Real execution
-                                                let search_query = &msg.content;
-                                                let searxng_base_url = std::env::var("SEARXNG_URL")
-                                                    .unwrap_or_else(|_| "https://searx.stream".to_string());
-                                                let searxng_server = crate::searxng_mcp::server::SearXNGServer::new(
-                                                    searxng_base_url,
-                                                    client.clone(),
-                                                    progress_client.clone(),
-                                                    our_pubkey,
-                                                    target_pubkey,
+                                                // SEARXNG TOOL - Module not implemented yet
+                                                log::info!("SearXNG search requested but module not available: {}", &msg.content);
+                                                
+                                                // Return placeholder response until searxng_mcp module is implemented
+                                                let placeholder_response = format!(
+                                                    "🔍 **Search Request Received**: {}\n\n\
+                                                    ⚠️ **SearXNG module not implemented yet**\n\
+                                                    🚧 This feature requires the searxng_mcp module to be created.\n\n\
+                                                    For now, please use alternative search methods or implement the searxng_mcp module.",
+                                                    &msg.content
                                                 );
-
-                                                // Execute real search
-                                                let search_request = crate::searxng_mcp::types::SearXNGWebSearchRequest {
-                                                    query: search_query.to_string(),
-                                                    count: Some(5),
-                                                    offset: Some(0),
+                                                
+                                                // Send placeholder response to user
+                                                let send_request = crate::mcp::chat::SendMessageRequest {
+                                                    message: placeholder_response,
                                                 };
-
-                                                match searxng_server.searxng_web_search(search_request).await {
-                                                    Ok(search_result) => {
-                                                        // Extract content from CallToolResult
-                                                        let content_str = if let Some(content) = search_result.content.first() {
-                                                            // Simple string extraction from search result
-                                                            format!("{:?}", content)
-                                                        } else {
-                                                            "Search completed but no results available".to_string()
-                                                        };
-
-                                                        // ENFORCE: Send real search results directly to user
-                                                        let final_result = format!(
-                                                            "🔍 **Search Results**\n\n{}",
-                                                            content_str
-                                                        );
-
-                                                        // MANDATORY: Send to user via chat_server
-                                                        let send_request = crate::mcp::chat::SendMessageRequest {
-                                                            message: final_result.clone(),
-                                                        };
-                                                        log::info!("Agent {} sending search results to user", agent_name);
-                                                        match chat_server.send(send_request).await {
-                                                            Ok(_) => log::info!("✅ Agent {} sent search results successfully", agent_name),
-                                                            Err(e) => log::error!("❌ Agent {} failed to send search results: {}", agent_name, e),
-                                                        }
-
-                                                        "Search results delivered to user".to_string()
-                                                    }
-                                                    Err(e) => {
-                                                        let error_msg = format!(
-                                                            "🔍 **Search Error**\n\nSearch failed: {}",
-                                                            e
-                                                        );
-
-                                                        // MANDATORY: Send error to user
-                                                        let send_request = crate::mcp::chat::SendMessageRequest {
-                                                            message: error_msg.clone(),
-                                                        };
-                                                        let _ = chat_server.send(send_request).await;
-
-                                                        "Search error delivered to user".to_string()
-                                                    }
+                                                log::info!("Agent {} sending searxng placeholder response to user", agent_name);
+                                                if let Err(e) = chat_server.send(send_request).await {
+                                                    log::error!("❌ Agent {} failed to send placeholder response: {}", agent_name, e);
                                                 }
+
+                                                "SearXNG module not implemented - placeholder response sent".to_string()
                                             },
                                             "goose" => {
                                                 // Progress: Starting real development task

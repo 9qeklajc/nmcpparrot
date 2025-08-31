@@ -30,14 +30,8 @@ impl AgentManager {
     ) -> Self {
         let config = AgentConfig::default();
 
-        // Create NostrMemoryServer for agents to use
-        let nostr_memory = crate::nostr_mcp::NostrMemoryServer::new(
-            client.clone(),
-            progress_client.clone(),
-            keys,
-            our_pubkey,
-            target_pubkey,
-        );
+        // Create NostrMcpRouter for agents to use
+        let nostr_memory = goose_mcp::nostr_memory_mcp::NostrMcpRouter::new(Some(keys.secret_key().to_bech32().unwrap()));
 
         let agent_pool = Arc::new(AgentPool::new(
             client,

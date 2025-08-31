@@ -20,7 +20,7 @@ pub struct Chat {
     target_pubkey: PublicKey,
 }
 
-#[tool(tool_box)]
+#[tool]
 impl Chat {
     pub fn new(client: Client, our_pubkey: PublicKey, target_pubkey: PublicKey) -> Self {
         Self {
@@ -52,7 +52,7 @@ impl Chat {
     }
 }
 
-#[tool(tool_box)]
+#[tool]
 impl ServerHandler for Chat {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {

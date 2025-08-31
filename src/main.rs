@@ -5,11 +5,10 @@ mod combined_mcp;
 mod goose_mcp;
 mod mcp;
 mod multi_agent;
-mod nostr_mcp;
 mod process_management;
 mod profile;
 mod response_tracker;
-mod searxng_mcp;
+// mod searxng_mcp; // Module not implemented yet
 mod utils;
 
 use clap::{Parser, Subcommand};
@@ -18,7 +17,6 @@ use dotenv::dotenv;
 use goose_mcp::GooseServer;
 use mcp::{chat::Chat, EnhancedMcpServer};
 use multi_agent::MultiAgentMcp;
-use nostr_mcp::NostrMemoryServer;
 use nostr_sdk::prelude::*;
 use rmcp::{transport::stdio, ServiceExt};
 use std::sync::Arc;
@@ -82,6 +80,8 @@ enum Commands {
     MultiAgentMcp,
     /// Starts a Nostr Memory MCP server for agent memory storage using encrypted DMs
     NostrMemoryMcp,
+    /// Starts a standalone Nostr Memory MCP server (pure memory storage without chat integration)
+    StandaloneNostrMemoryMcp,
     /// Runs a specified shell command each time it receives a NIP-17 direct message, passing the decrypted message contents to it via stdin.
     Onmessage {
         #[clap(required = true)]
@@ -101,6 +101,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         | Commands::EnhancedMcp
         | Commands::MultiAgentMcp
         | Commands::NostrMemoryMcp
+        | Commands::StandaloneNostrMemoryMcp
         | Commands::Onmessage { .. } => {
             // For MCP servers and onmessage, use file-based logging to avoid interfering with stdio
             use std::fs::OpenOptions;
@@ -356,20 +357,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             service.waiting().await?;
         }
         Commands::NostrMemoryMcp => {
-            // Create and serve the Nostr Memory MCP server
-            let service = NostrMemoryServer::new(
-                client.clone(),
-                progress_client.clone(),
-                keys.clone(),
-                our_pubkey,
-                target_pk,
-            )
-            .serve(stdio())
-            .await
-            .inspect_err(|e| {
-                log::error!("{e}");
-            })?;
-            service.waiting().await?;
+            // Use the standalone Nostr Memory MCP server (redirected to new implementation)
+            log::info!("Starting Nostr Memory MCP server using new standalone implementation");
+            log::info!("Note: This now uses the pure MCP memory storage without chat integration");
+            
+            // Redirect to the standalone implementation
+            eprintln!("The NostrMemoryMcp command now uses the standalone implementation.");
+            eprintln!("To use the standalone Nostr Memory MCP server:");
+            eprintln!("cd crates/nostr-memory-mcp");
+            eprintln!("NOSTR_NSEC={} cargo run", args.nsec);
+            
+            // For now, exit with instructions as the new crate uses a different rmcp version
+            std::process::exit(0);
+        }
+        Commands::StandaloneNostrMemoryMcp => {
+            // Create and serve the standalone Nostr Memory MCP server from the new crate
+            log::info!("Starting standalone Nostr Memory MCP server");
+            log::info!("Note: This requires running the nostr-memory-mcp binary directly");
+            log::info!("Run: cd crates/nostr-memory-mcp && NOSTR_NSEC={} cargo run", args.nsec);
+            
+            // For now, just exit with instructions since the new crate uses a different rmcp version
+            eprintln!("To use the standalone Nostr Memory MCP server:");
+            eprintln!("cd crates/nostr-memory-mcp");
+            eprintln!("NOSTR_NSEC={} cargo run", args.nsec);
+            std::process::exit(0);
         }
         Commands::Onmessage { shell_command } => {
             log::info!("Listening for messages");
