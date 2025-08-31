@@ -7,9 +7,9 @@ use rmcp::{
     },
     schemars, tool, Error as RmcpError, ServerHandler,
 };
-use tokio::time::{sleep, Duration};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use tokio::time::{sleep, Duration};
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub struct SendMessageRequest {
@@ -33,7 +33,7 @@ pub struct Chat {
     task_completed: Arc<AtomicBool>,
 }
 
-#[tool(tool_box)]
+#[tool]
 impl Chat {
     pub fn new(
         client: Client,

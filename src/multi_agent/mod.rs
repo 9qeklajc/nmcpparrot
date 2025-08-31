@@ -31,7 +31,7 @@ pub struct MultiAgentMcp {
     nostr_memory: NostrMcpRouter,
 }
 
-#[tool(tool_box)]
+#[tool]
 impl MultiAgentMcp {
     pub fn new(
         client: Client,
@@ -62,7 +62,7 @@ impl MultiAgentMcp {
     #[tool(
         description = "Send a message to the user - ONLY use for agent deployment feedback, NOT for answers"
     )]
-    async fn send(
+    pub async fn send(
         &self,
         #[tool(aggr)] crate::mcp::types::SendMessageRequest { message }: crate::mcp::types::SendMessageRequest,
     ) -> Result<CallToolResult, RmcpError> {
@@ -136,7 +136,7 @@ impl MultiAgentMcp {
     }
 
     #[tool(description = "Send a progress/debug message to the user")]
-    async fn progress(
+    pub async fn progress(
         &self,
         #[tool(aggr)] crate::mcp::types::ProgressMessageRequest { message }: crate::mcp::types::ProgressMessageRequest,
     ) -> Result<CallToolResult, RmcpError> {
@@ -146,7 +146,7 @@ impl MultiAgentMcp {
     #[tool(
         description = "Listen and wait for the user's next message - ONLY after creating an agent"
     )]
-    async fn wait(&self) -> Result<CallToolResult, RmcpError> {
+    pub async fn wait(&self) -> Result<CallToolResult, RmcpError> {
         // Check if any agents are currently active
         let manager = self.agent_manager.write().await;
 
@@ -207,7 +207,7 @@ impl MultiAgentMcp {
     }
 
     #[tool(description = "Create and start a new agent task with specified capabilities")]
-    async fn create_agent(
+    pub async fn create_agent(
         &self,
         #[tool(aggr)] request: CreateAgentRequest,
     ) -> Result<CallToolResult, RmcpError> {
@@ -329,7 +329,7 @@ impl MultiAgentMcp {
     }
 
     #[tool(description = "Create multiple agents to work in parallel on different tasks")]
-    async fn create_agents_parallel(
+    pub async fn create_agents_parallel(
         &self,
         #[tool(aggr)] request: CreateMultipleAgentsRequest,
     ) -> Result<CallToolResult, RmcpError> {
@@ -431,7 +431,7 @@ impl MultiAgentMcp {
     }
 
     #[tool(description = "Get system processing status (internal debug only)")]
-    async fn list_agents(&self) -> Result<CallToolResult, RmcpError> {
+    pub async fn list_agents(&self) -> Result<CallToolResult, RmcpError> {
         let manager = self.agent_manager.read().await;
         let agents = manager.list_agents().await;
 
@@ -446,7 +446,7 @@ impl MultiAgentMcp {
     }
 
     #[tool(description = "Stop background processing task")]
-    async fn stop_agent(
+    pub async fn stop_agent(
         &self,
         #[tool(aggr)] request: StopAgentRequest,
     ) -> Result<CallToolResult, RmcpError> {
@@ -471,7 +471,7 @@ impl MultiAgentMcp {
     }
 
     #[tool(description = "Send a message to a specific agent")]
-    async fn message_agent(
+    pub async fn message_agent(
         &self,
         #[tool(aggr)] request: MessageAgentRequest,
     ) -> Result<CallToolResult, RmcpError> {
@@ -517,7 +517,7 @@ impl MultiAgentMcp {
     }
 
     #[tool(description = "Analyze a request and create an intelligent orchestration plan")]
-    async fn analyze_request(
+    pub async fn analyze_request(
         &self,
         #[tool(aggr)] args: AnalyzeRequestArgs,
     ) -> Result<CallToolResult, RmcpError> {
@@ -594,7 +594,7 @@ impl MultiAgentMcp {
     }
 
     #[tool(description = "Store a memory entry - AGENTS ONLY, main orchestrator must create agent")]
-    async fn store_memory(
+    pub async fn store_memory(
         &self,
         #[tool(aggr)] request: String,
     ) -> Result<CallToolResult, RmcpError> {
@@ -748,7 +748,7 @@ impl MultiAgentMcp {
     }
 
     #[tool(description = "Get system status - AGENTS ONLY, main orchestrator must create agent")]
-    async fn system_status(&self) -> Result<CallToolResult, RmcpError> {
+    pub async fn system_status(&self) -> Result<CallToolResult, RmcpError> {
         // ENFORCEMENT: System status should be checked by agents, not main orchestrator
         let enforcement_message = "🚨 **AGENT CREATION MANDATE VIOLATION** 🚨\n\n\
             ❌ **FORBIDDEN**: Main orchestrator cannot check system status directly\n\
@@ -767,7 +767,6 @@ impl MultiAgentMcp {
     }
 }
 
-#[tool(tool_box)]
 impl ServerHandler for MultiAgentMcp {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {

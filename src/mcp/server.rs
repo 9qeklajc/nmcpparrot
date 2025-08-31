@@ -21,7 +21,7 @@ pub struct EnhancedMcpServer {
     progress_tracker: Arc<ProgressTracker>,
 }
 
-#[tool(tool_box)]
+#[tool]
 impl EnhancedMcpServer {
     pub fn new(
         client: Client,
@@ -83,17 +83,17 @@ impl EnhancedMcpServer {
     #[tool(description = "Send a message to the user")]
     async fn send(
         &self,
-        #[tool(aggr)] request: SendMessageRequest,
+        #[tool(aggr)] SendMessageRequest { message }: SendMessageRequest,
     ) -> Result<CallToolResult, RmcpError> {
-        self.chat.send(request).await
+        self.chat.send(SendMessageRequest { message }).await
     }
 
     #[tool(description = "Send a progress/debug message to the user via the progress identity")]
     async fn progress(
         &self,
-        #[tool(aggr)] request: ProgressMessageRequest,
+        #[tool(aggr)] ProgressMessageRequest { message }: ProgressMessageRequest,
     ) -> Result<CallToolResult, RmcpError> {
-        self.chat.progress(request).await
+        self.chat.progress(ProgressMessageRequest { message }).await
     }
 
     #[tool(description = "Listen and wait for the user's next message")]
@@ -550,7 +550,7 @@ impl EnhancedMcpServer {
     }
 }
 
-#[tool(tool_box)]
+#[tool]
 impl ServerHandler for EnhancedMcpServer {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
